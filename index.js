@@ -53,7 +53,7 @@ client.connect(err => {
     // view by category
     app.get('/newsList/:category', (req, res) => {
         console.log('from req.params', req.params.category)
-        if (req.params.category === 'All') {
+        if (req.params.category === 'All' || req.params.category === undefined || req.params.category === null || req.params.category === '') {
             allNewsCollection.find({})
                 .toArray((err, items) => {
                     res.send(items);
@@ -62,7 +62,7 @@ client.connect(err => {
         else {
             allNewsCollection.find({ category: req.params.category })
                 .toArray((err, items) => {
-                    res.send(items[0]);
+                    res.send(items);
                     console.log(err);
                 })
         }
