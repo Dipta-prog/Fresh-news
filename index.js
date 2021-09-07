@@ -21,26 +21,53 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 client.connect(err => {
     console.log('connection error', err)
     const allNewsCollection = client.db("Fresh-News").collection("All-News-List");
-    const orderCollection = client.db("pro-repair").collection("ordered-services");
-    const reviewCollection = client.db("pro-repair").collection("user-review");
-    const adminsCollection = client.db("pro-repair").collection("admins");
-// all
+    const topNews = client.db("Fresh-News").collection("Top-News");
+    const newsHighlight = client.db("Fresh-News").collection("News-Highlights");
+    const adminsCollection = client.db("Fresh-News").collection("Make-Admin");
+
+
+    // all
     app.get('/newsList', (req, res) => {
         allNewsCollection.find({})
             .toArray((err, items) => {
                 res.send(items);
             })
     });
-// type filter
-    app.get('/newsList/:category', (req, res) => {
-        console.log('from req.params', req.params.category)
-        allNewsCollection.find({ category: req.params.category })
+
+    // Top News
+    app.get('/topNewsList', (req, res) => {
+        topNews.find({})
             .toArray((err, items) => {
-                res.send(items[0]);
-                console.log(err);
+                res.send(items);
             })
     });
 
+    // News Highlight
+    app.get('/newsHighlight', (req, res) => {
+        newsHighlight.find({})
+            .toArray((err, items) => {
+                res.send(items);
+            })
+    });
+
+    // view by category
+    app.get('/newsList/:category', (req, res) => {
+        console.log('from req.params', req.params.category)
+        if (req.params.category === 'All') {
+            allNewsCollection.find({})
+                .toArray((err, items) => {
+                    res.send(items);
+                })
+        }
+        else {
+            allNewsCollection.find({ category: req.params.category })
+                .toArray((err, items) => {
+                    res.send(items[0]);
+                    console.log(err);
+                })
+        }
+    });
+    // view by id
     app.get('/view-more/:id', (req, res) => {
         console.log('from req.params', req.params.id)
         allNewsCollection.find({ _id: ObjectId(req.params.id) })
@@ -50,7 +77,7 @@ client.connect(err => {
             })
     });
 
-
+    // add news
     app.post('/addNews', (req, res) => {
         const newProduct = req.body;
         console.log('adding new product', newProduct);
@@ -61,42 +88,12 @@ client.connect(err => {
             })
     })
 
-    app.delete('/deleteProduct/:id', (req, res) => {
+    // delete news
+    app.delete('/deleteNews/:id', (req, res) => {
         console.log('from deleteProduct backend', req.params.id)
         allNewsCollection.deleteOne({ _id: ObjectId(req.params.id) })
             .then(result => {
                 res.send({ deleteCount: result.deletedCount });
-            })
-    });
-
-
-    // order-products
-    app.post('/addOrderedProduct', (req, res) => {
-        const newProduct = req.body;
-        console.log('adding new product', newProduct);
-        orderCollection.insertOne(newProduct)
-            .then(result => {
-                console.log('inserted count', result);
-                res.send(result.insertedCount > 0)
-            })
-    });
-
-
-    app.get('/orderedProducts', (req, res) => {
-        // console.log(req.query.email);
-        orderCollection.find({ email: req.query.email })
-            .toArray((err, items) => {
-                res.send(items);
-            })
-    });
-
-
-    // all user order list (admin page)
-    app.get('/allUserOrderedProducts', (req, res) => {
-        // console.log(req.query.email);
-        orderCollection.find({})
-            .toArray((err, items) => {
-                res.send(items);
             })
     });
 
@@ -106,12 +103,10 @@ client.connect(err => {
         // console.log(req.query.email);
         adminsCollection.find({ email: req.body.email })
             .toArray((err, admins) => {
-                console.log('find result by email',admins);
+                console.log('find result by email', admins);
                 res.send(admins.length > 0);
             })
     });
-
-
 
 
     // make-admin
@@ -124,41 +119,6 @@ client.connect(err => {
                 res.send(result.insertedCount > 0)
             })
     });
-
-
-    // add-review
-    app.post('/writeReview', (req, res) => {
-        const review = req.body;
-        console.log('adding review', review);
-        reviewCollection.insertOne(review)
-            .then(result => {
-                console.log('inserted count', result);
-                res.send(result.insertedCount > 0)
-            })
-    });
-
-    // review api path
-    app.get('/reviews', (req, res) => {
-        reviewCollection.find({})
-            .toArray((err, items) => {
-                res.send(items);
-            })
-    });
-
-
-    // update order status
-    app.patch('/update/:id', (req, res) => {
-        orderCollection.updateOne({ _id: ObjectId(req.params.id) },
-        {
-            $set: {orderStatus: req.body.updatedOrderStatus}
-        })
-            .then(result=>{
-                console.log(result);
-            })
-
-    });
-
-
 
 
     //   client.close();
